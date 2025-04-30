@@ -1,0 +1,13 @@
+---
+title: "docs: add rule for fix: use personal access token for creating pull requests"
+description: "Automatically generated Cursor rule for the merged PR #5"
+files:
+  - mdc:.cursor/rules/use-personal-access-token-for-pull-requests.mdc
+globs:
+  - .cursor/rules/*.mdc
+---
+
+Automatically generated Cursor rule for the merged PR #5
+
+## Files
+- [.cursor/rules/use-personal-access-token-for-pull-requests.mdc](mdc:.cursor/rules/use-personal-access-token-for-pull-requests.mdc)

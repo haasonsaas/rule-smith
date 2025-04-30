@@ -65,29 +65,45 @@ class RuleSmith {
   }
 
   async generateRuleContent(prInfo: PRInfo): Promise<RuleContent> {
-    const prompt = `Based on the following PR information, generate a Cursor rule:
-Title: ${prInfo.title}
-Description: ${prInfo.body}
-Changed Files: ${prInfo.changedFiles.join(', ')}
-Commit Messages: ${prInfo.commitMessages.join(', ')}
+    const prompt = `# Cursor Rule Generation Task
 
-Please provide a YAML object with these fields that follows the Cursor rule format:
-description: A short description of the rule's purpose
-globs: An array of glob patterns (e.g. /path/pattern/**/*) or empty if not needed
-alwaysApply: boolean (default false unless specifically needed)
-title: The rule title (will be used as heading)
-files: Array of relevant files to link to
+## Pull Request Context
+- Title: ${prInfo.title}
+- Description: ${prInfo.body}
+- Changed Files: ${prInfo.changedFiles.join(', ')}
+- Commit Messages: ${prInfo.commitMessages.join(', ')}
 
-The YAML must be properly formatted with each field on a new line and arrays properly indented. Example:
-description: "This is an example rule that explains a key feature"
+## Your Task
+Analyze the PR information above and create a Cursor rule that would help developers understand the changes.
+
+## Output Format Requirements
+Return YAML with these exact fields:
+- title: A clear, concise title (3-8 words) that describes what the rule explains
+- description: A single sentence (15-30 words) explaining the rule's purpose
+- globs: Array of glob patterns targeting relevant files (only add if truly needed)
+- alwaysApply: Boolean (set to true only if rule applies to all developers regardless of context)
+- files: Array of 1-5 most important files that developers should review
+
+## Guidelines for Creating Effective Rules
+- Focus on explaining WHY changes were made, not just WHAT was changed
+- Keep the title action-oriented when possible (e.g., "How to Use X" rather than "X Documentation")
+- Include only the most important files, prioritizing those with core logic
+- For glob patterns, be specific enough to target relevant files but not too broad
+- If the PR involves a new feature, explain how to use it
+- If the PR fixes a bug, explain how to avoid similar issues
+
+## Response Format
+Return only valid YAML without code blocks or extra text:
+
+title: "Your Rule Title Here"
+description: "Your rule description here."
 globs:
-  - "src/feature/**/*"
-  - "test/feature/**/*.test.ts"
+  - "pattern/one/**/*"
+  - "pattern/two/**/*.ts"
 alwaysApply: false
-title: "How to Use the New Feature"
 files:
-  - "src/feature/main.ts"
-  - "src/feature/utils.ts"`;
+  - "path/to/important/file.ts"
+  - "path/to/another/file.ts"`;
 
     const completion = await this.openai.chat.completions.create({
       model: "gpt-4o",

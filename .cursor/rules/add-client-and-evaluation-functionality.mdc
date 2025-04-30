@@ -1,0 +1,14 @@
+---
+description: Explains the new client and evaluation functionality added to the project.
+alwaysApply: false
+---
+
+# Add Client and Evaluation Functionality
+
+Explains the new client and evaluation functionality added to the project.
+
+- [.cursor/rules/new-feature.mdc](mdc:.cursor/rules/new-feature.mdc)
+- [src/client.d.ts](mdc:src/client.d.ts)
+- [src/client.ts](mdc:src/client.ts)
+- [src/evals.d.ts](mdc:src/evals.d.ts)
+- [src/evaluate-cursor-rule.test.ts](mdc:src/evaluate-cursor-rule.test.ts)

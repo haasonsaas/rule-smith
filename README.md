@@ -31,6 +31,7 @@ A lightweight, repo-native agent that writes Cursor rules automatically for your
 4. Add the following secrets to your GitHub repository:
    - `GITHUB_TOKEN` (automatically provided by GitHub Actions)
    - `OPENAI_API_KEY` (your OpenAI API key)
+   - `PERSONAL_ACCESS_TOKEN` (a GitHub personal access token with repo scope, needed for creating pull requests)
 
 ## Usage
 

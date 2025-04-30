@@ -1,5 +1,14 @@
 ---
-description:
+description: A new feature has been added to the project
 globs:
+  - src/**/*.ts
+  - test/**/*.ts
 alwaysApply: false
 ---
+
+# New Feature
+
+A new feature has been added to the project
+
+- [src/feature.ts](mdc:src/feature.ts)
+- [test/feature.test.ts](mdc:test/feature.test.ts)

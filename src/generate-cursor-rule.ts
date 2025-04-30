@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import { config } from 'dotenv';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { parse } from 'yaml';
+import { parse, stringify } from 'yaml';
 
 config();
 
@@ -97,12 +97,14 @@ globs: string[]`;
     const ruleName = ruleContent.title.toLowerCase().replace(/\s+/g, '-');
     const rulePath = join('.cursor', 'rules', `${ruleName}.mdc`);
     
-    const ruleContentString = `---
-title: ${ruleContent.title}
-description: ${ruleContent.description}
-files: ${ruleContent.files.map(f => `mdc:${f}`).join('\n  - ')}
-globs: ${ruleContent.globs.map(g => `"${g}"`).join('\n  - ')}
----
+    const frontMatter = {
+      title: ruleContent.title,
+      description: ruleContent.description,
+      files: ruleContent.files.map(f => `mdc:${f}`),
+      globs: ruleContent.globs
+    };
+    
+    const ruleContentString = `---\n${stringify(frontMatter)}---
 
 ${ruleContent.description}
 

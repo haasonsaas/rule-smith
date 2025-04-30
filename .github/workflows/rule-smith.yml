@@ -41,7 +41,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           commit-message: "docs: add rule for ${{ github.event.pull_request.title }}"
           title: "docs: add rule for ${{ github.event.pull_request.title }}"
           body: "Automatically generated Cursor rule for the merged PR #${{ github.event.pull_request.number }}"

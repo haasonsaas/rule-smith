@@ -94,10 +94,13 @@ globs:
     const content = completion.choices[0].message.content;
     if (!content) throw new Error('Failed to generate rule content');
 
+    // Strip YAML code block markers if present
+    const cleanContent = content.replace(/^```yaml\n|\n```$/g, '').trim();
+
     try {
-      return parse(content) as RuleContent;
+      return parse(cleanContent) as RuleContent;
     } catch (error: unknown) {
-      console.error('Failed to parse YAML content:', content);
+      console.error('Failed to parse YAML content:', cleanContent);
       throw new Error(`Failed to parse YAML: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

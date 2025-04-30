@@ -70,17 +70,21 @@ Description: ${prInfo.body}
 Changed Files: ${prInfo.changedFiles.join(', ')}
 Commit Messages: ${prInfo.commitMessages.join(', ')}
 
-Please provide:
-1. A concise title for the rule
-2. A one-sentence description of the feature
-3. A list of relevant files
-4. Appropriate glob patterns for the files
-
-Format the response as YAML with these fields:
+Please provide a YAML object with these fields:
 title: string
 description: string
 files: string[]
-globs: string[]`;
+globs: string[]
+
+The YAML must be properly formatted with each field on a new line and arrays properly indented. Example:
+title: "Example Rule"
+description: "This is an example rule"
+files:
+  - "src/file1.ts"
+  - "src/file2.ts"
+globs:
+  - "src/**/*.ts"
+  - "test/**/*.ts"`;
 
     const completion = await this.openai.chat.completions.create({
       model: "gpt-4o",
@@ -90,7 +94,12 @@ globs: string[]`;
     const content = completion.choices[0].message.content;
     if (!content) throw new Error('Failed to generate rule content');
 
-    return parse(content) as RuleContent;
+    try {
+      return parse(content) as RuleContent;
+    } catch (error: unknown) {
+      console.error('Failed to parse YAML content:', content);
+      throw new Error(`Failed to parse YAML: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   async createRuleFile(ruleContent: RuleContent): Promise<string> {

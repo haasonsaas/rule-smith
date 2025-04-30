@@ -1,0 +1,14 @@
+---
+title: New Feature
+description: A new feature has been added to the project
+files: mdc:src/feature.ts
+  - mdc:test/feature.test.ts
+globs: "src/**/*.ts"
+  - "test/**/*.ts"
+---
+
+A new feature has been added to the project
+
+## Files
+- [src/feature.ts](mdc:src/feature.ts)
+- [test/feature.test.ts](mdc:test/feature.test.ts)

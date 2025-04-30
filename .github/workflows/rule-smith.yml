@@ -1,0 +1,50 @@
+name: Rule-Smith
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - master
+
+jobs:
+  rule-smith:
+    if: github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'cursor-rules')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Run Rule-Smith
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bun run start
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          commit-message: "docs: add rule for ${{ github.event.pull_request.title }}"
+          title: "docs: add rule for ${{ github.event.pull_request.title }}"
+          body: "Automatically generated Cursor rule for the merged PR #${{ github.event.pull_request.number }}"
+          branch: "rule-smith/${{ github.event.pull_request.number }}"
+          base: main
+          labels: cursor-rules 

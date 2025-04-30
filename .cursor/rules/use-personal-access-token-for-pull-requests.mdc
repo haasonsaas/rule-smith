@@ -1,0 +1,14 @@
+---
+title: Use Personal Access Token for Pull Requests
+description: Ensure that personal access tokens are used in workflows for
+  creating pull requests
+files:
+  - mdc:.github/workflows/rule-smith.yml
+globs:
+  - .github/workflows/**/*.yml
+---
+
+Ensure that personal access tokens are used in workflows for creating pull requests
+
+## Files
+- [.github/workflows/rule-smith.yml](mdc:.github/workflows/rule-smith.yml)

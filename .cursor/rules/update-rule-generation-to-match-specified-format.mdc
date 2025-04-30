@@ -1,0 +1,16 @@
+---
+description: This rule updates the rule generation process to match the
+  specified format by modifying the interface, frontmatter fields, and including
+  title and prompt updates.
+globs:
+  - src/generate-cursor-rule.test.ts
+  - src/generate-cursor-rule.ts
+alwaysApply: false
+---
+
+# Update Rule Generation to Match Specified Format
+
+This rule updates the rule generation process to match the specified format by modifying the interface, frontmatter fields, and including title and prompt updates.
+
+- [src/generate-cursor-rule.test.ts](mdc:src/generate-cursor-rule.test.ts)
+- [src/generate-cursor-rule.ts](mdc:src/generate-cursor-rule.ts)

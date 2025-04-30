@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { parse, stringify } from 'yaml';
+import Ajv from 'ajv';
 
 config();
 
@@ -17,10 +18,22 @@ interface PRInfo {
 interface RuleContent {
   title: string;
   description: string;
-  globs: string[];
+  globs?: string[];
   alwaysApply: boolean;
   files: string[];
 }
+
+const ruleSchema = {
+  type: 'object',
+  required: ['title', 'description', 'files', 'alwaysApply'],
+  properties: {
+    title: { type: 'string', minLength: 3, maxLength: 50 },
+    description: { type: 'string', minLength: 15, maxLength: 100 },
+    globs: { type: 'array', items: { type: 'string' }, nullable: true },
+    alwaysApply: { type: 'boolean' },
+    files: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 5 }
+  }
+} as const;
 
 class RuleSmith {
   private octokit: Octokit;
@@ -28,6 +41,7 @@ class RuleSmith {
   private owner: string;
   private repo: string;
   private prNumber: number;
+  private validator: ReturnType<typeof Ajv.prototype.compile>;
 
   constructor(owner: string, repo: string, prNumber: number) {
     this.octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
@@ -35,6 +49,8 @@ class RuleSmith {
     this.owner = owner;
     this.repo = repo;
     this.prNumber = prNumber;
+    const ajv = new Ajv();
+    this.validator = ajv.compile(ruleSchema);
   }
 
   async getPRInfo(): Promise<PRInfo> {
@@ -64,64 +80,77 @@ class RuleSmith {
     };
   }
 
-  async generateRuleContent(prInfo: PRInfo): Promise<RuleContent> {
-    const prompt = `# Cursor Rule Generation Task
+  private async generateRuleWithRetry(prInfo: PRInfo, retries = 3, delay = 1000): Promise<RuleContent> {
+    const systemMsg = `You are Cursor-RuleBot, an expert technical writer.
+Return **only** valid YAML that conforms to the schema below—no markdown fences, no explanations.
 
-## Pull Request Context
-- Title: ${prInfo.title}
-- Description: ${prInfo.body}
-- Changed Files: ${prInfo.changedFiles.join(', ')}
-- Commit Messages: ${prInfo.commitMessages.join(', ')}
+Schema:
+title:        string  # 3-8 words
+description:  string  # 15-30 words
+globs:        string[]|null  # omit or empty if unnecessary
+alwaysApply:  boolean # default false
+files:        string[]       # 1-5 paths
 
-## Your Task
-Analyze the PR information above and create a Cursor rule that would help developers understand the changes.
+If YAML is invalid or missing keys, you MUST reply with the text "INVALID".`;
 
-## Output Format Requirements
-Return YAML with these exact fields:
-- title: A clear, concise title (3-8 words) that describes what the rule explains
-- description: A single sentence (15-30 words) explaining the rule's purpose
-- globs: Array of glob patterns targeting relevant files (only add if truly needed)
-- alwaysApply: Boolean (set to true only if rule applies to all developers regardless of context)
-- files: Array of 1-5 most important files that developers should review
+    const userMsg = `### PULL REQUEST CONTEXT – do not copy
+TITLE: ${prInfo.title}
+BODY: ${prInfo.body}
+CHANGED_FILES: ${prInfo.changedFiles.join('; ')}
+COMMITS: ${prInfo.commitMessages.join('; ')}
 
-## Guidelines for Creating Effective Rules
-- Focus on explaining WHY changes were made, not just WHAT was changed
-- Keep the title action-oriented when possible (e.g., "How to Use X" rather than "X Documentation")
-- Include only the most important files, prioritizing those with core logic
-- For glob patterns, be specific enough to target relevant files but not too broad
-- If the PR involves a new feature, explain how to use it
-- If the PR fixes a bug, explain how to avoid similar issues
+### TASK
+1. Analyse the PR context.
+2. Produce a useful Cursor rule that explains *why* the change matters.
+3. Follow the schema exactly.
+4. Do not wrap the YAML in \`\`\` fences.
 
-## Response Format
-Return only valid YAML without code blocks or extra text:
-
-title: "Your Rule Title Here"
-description: "Your rule description here."
+### OUTPUT EXAMPLE
+title: "Update build cache"
+description: "Describes caching strategy added to speed up CI builds across pull requests."
 globs:
-  - "pattern/one/**/*"
-  - "pattern/two/**/*.ts"
+  - ".github/workflows/**/*"
 alwaysApply: false
 files:
-  - "path/to/important/file.ts"
-  - "path/to/another/file.ts"`;
+  - ".github/workflows/ci.yml"`;
 
-    const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-    });
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const completion = await this.openai.chat.completions.create({
+          model: "gpt-4",
+          temperature: 0,
+          messages: [
+            { role: "system", content: systemMsg.trim() },
+            { role: "user", content: userMsg.trim() }
+          ],
+        });
 
-    const content = completion.choices[0].message.content;
-    if (!content) throw new Error('Failed to generate rule content');
+        const raw = completion.choices[0].message?.content?.trim() ?? "";
+        if (raw === "INVALID" || !raw) {
+          throw new Error("LLM returned invalid YAML");
+        }
 
-    // Strip YAML code block markers if present
-    const cleanContent = content.replace(/^```yaml\n|\n```$/g, '').trim();
+        const parsed = parse(raw) as RuleContent;
+        
+        if (!this.validator(parsed)) {
+          console.error('Validation errors:', this.validator.errors);
+          throw new Error('Generated content failed schema validation');
+        }
 
-    try {
-      return parse(cleanContent) as RuleContent;
-    } catch (error: unknown) {
-      console.error('Failed to parse YAML content:', cleanContent);
-      throw new Error(`Failed to parse YAML: ${error instanceof Error ? error.message : String(error)}`);
+        return parsed;
+      } catch (error) {
+        if (attempt === retries) throw error;
+        console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      }
     }
+
+    throw new Error('Failed to generate valid rule content after all retries');
+  }
+
+  async generateRuleContent(prInfo: PRInfo): Promise<RuleContent> {
+    return this.generateRuleWithRetry(prInfo);
   }
 
   async createRuleFile(ruleContent: RuleContent): Promise<string> {

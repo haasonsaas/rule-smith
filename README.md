@@ -9,7 +9,6 @@ A lightweight, repo-native agent that writes Cursor rules automatically for your
 - Creates well-formatted `.mdc` files with appropriate glob patterns
 - Integrates seamlessly with GitHub Actions
 - Supports both manual and automated rule generation
-- Testing
 
 ## Setup
 

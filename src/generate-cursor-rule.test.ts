@@ -26,6 +26,7 @@ describe('RuleSmith', () => {
       description: 'A new feature has been added to the project',
       files: ['src/feature.ts', 'test/feature.test.ts'],
       globs: ['src/**/*.ts', 'test/**/*.ts'],
+      alwaysApply: false
     };
 
     // Mock the OpenAI response
@@ -35,14 +36,15 @@ describe('RuleSmith', () => {
           create: mock(() => Promise.resolve({
             choices: [{
               message: {
-                content: `title: ${mockRuleContent.title}
-description: ${mockRuleContent.description}
+                content: `description: ${mockRuleContent.description}
+globs:
+  - ${mockRuleContent.globs[0]}
+  - ${mockRuleContent.globs[1]}
+alwaysApply: false
+title: ${mockRuleContent.title}
 files:
   - ${mockRuleContent.files[0]}
-  - ${mockRuleContent.files[1]}
-globs:
-  - "${mockRuleContent.globs[0]}"
-  - "${mockRuleContent.globs[1]}"`,
+  - ${mockRuleContent.files[1]}`,
               },
             }],
           })),
@@ -63,6 +65,7 @@ globs:
       description: 'A new feature has been added to the project',
       files: ['src/feature.ts', 'test/feature.test.ts'],
       globs: ['src/**/*.ts', 'test/**/*.ts'],
+      alwaysApply: false
     };
 
     const result = await ruleSmith.createRuleFile(mockRuleContent);

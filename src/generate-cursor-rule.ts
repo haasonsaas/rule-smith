@@ -17,8 +17,9 @@ interface PRInfo {
 interface RuleContent {
   title: string;
   description: string;
-  files: string[];
   globs: string[];
+  alwaysApply: boolean;
+  files: string[];
 }
 
 class RuleSmith {
@@ -70,21 +71,23 @@ Description: ${prInfo.body}
 Changed Files: ${prInfo.changedFiles.join(', ')}
 Commit Messages: ${prInfo.commitMessages.join(', ')}
 
-Please provide a YAML object with these fields:
-title: string
-description: string
-files: string[]
-globs: string[]
+Please provide a YAML object with these fields that follows the Cursor rule format:
+description: A short description of the rule's purpose
+globs: An array of glob patterns (e.g. /path/pattern/**/*) or empty if not needed
+alwaysApply: boolean (default false unless specifically needed)
+title: The rule title (will be used as heading)
+files: Array of relevant files to link to
 
 The YAML must be properly formatted with each field on a new line and arrays properly indented. Example:
-title: "Example Rule"
-description: "This is an example rule"
-files:
-  - "src/file1.ts"
-  - "src/file2.ts"
+description: "This is an example rule that explains a key feature"
 globs:
-  - "src/**/*.ts"
-  - "test/**/*.ts"`;
+  - "src/feature/**/*"
+  - "test/feature/**/*.test.ts"
+alwaysApply: false
+title: "How to Use the New Feature"
+files:
+  - "src/feature/main.ts"
+  - "src/feature/utils.ts"`;
 
     const completion = await this.openai.chat.completions.create({
       model: "gpt-4o",
@@ -109,18 +112,19 @@ globs:
     const ruleName = ruleContent.title.toLowerCase().replace(/\s+/g, '-');
     const rulePath = join('.cursor', 'rules', `${ruleName}.mdc`);
     
+    // Create frontmatter with only the specified fields
     const frontMatter = {
-      title: ruleContent.title,
       description: ruleContent.description,
-      files: ruleContent.files.map(f => `mdc:${f}`),
-      globs: ruleContent.globs
+      globs: ruleContent.globs,
+      alwaysApply: ruleContent.alwaysApply
     };
     
     const ruleContentString = `---\n${stringify(frontMatter)}---
 
+# ${ruleContent.title}
+
 ${ruleContent.description}
 
-## Files
 ${ruleContent.files.map(f => `- [${f}](mdc:${f})`).join('\n')}
 `;
 

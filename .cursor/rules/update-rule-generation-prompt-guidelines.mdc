@@ -1,0 +1,12 @@
+---
+description: Understand the new format and guidelines for creating rule
+  generation prompts in the Cursor tool.
+globs: []
+alwaysApply: false
+---
+
+# Update Rule Generation Prompt Guidelines
+
+Understand the new format and guidelines for creating rule generation prompts in the Cursor tool.
+
+- [src/generate-cursor-rule.ts](mdc:src/generate-cursor-rule.ts)

@@ -1,0 +1,14 @@
+---
+title: Prevent Workflow from Triggering on Its Own PRs
+description: Rule to prevent the GitHub workflow from triggering on its own pull
+  requests by modifying the workflow file.
+files:
+  - mdc:.github/workflows/rule-smith.yml
+globs:
+  - .github/workflows/**/*.yml
+---
+
+Rule to prevent the GitHub workflow from triggering on its own pull requests by modifying the workflow file.
+
+## Files
+- [.github/workflows/rule-smith.yml](mdc:.github/workflows/rule-smith.yml)
